@@ -1,27 +1,36 @@
 #!/bin/bash
-# パスワードを管理するシェルスクリプト
+# パスワードを管理するシェルスクリプトです
+set -euo pipefail # エラーの検出
+on_error() {
+    echo "エラーが起きたので終了しました。"
+}
+trap on_error ERR
 
 # パスワードの追加
 add_password(){
     local in_servicename in_username in_password
     while true; do
         echo "サービス名を入力してください："
-        if ! read -r -n 256 -t 300 in_servicename; then
+        if ! read -r -t 300 in_servicename; then
             echo "タイムアウトしました."
             break
         fi
+        in_servicename=${in_servicename:0:512}
 
         echo "ユーザー名を入力してください："
-        if ! read -r -n 256 -t 300 in_username; then
+        if ! read -r -t 300 in_username; then
             echo "タイムアウトしました."
             break
         fi
+        in_username=${in_username:0:512}
 
         echo "パスワードを入力してください："
-        if ! read -r -n 256 -t 300 in_password; then
+        if ! read -r -t 300 in_password; then
             echo "タイムアウトしました."
             break
         fi
+        in_password=${in_password:0:512}
+        
         {
         printf '%s' "Service=$in_servicename"  | base64 | tr -d '\n'
         printf '\n'
@@ -35,25 +44,25 @@ add_password(){
         echo ""
         break
     done
-
 }
 
 # パスワードの表示
 get_password(){
-    local match result search_servicename
+    local match result search_servicename search_key out_servicename out_username out_password
 
     while true; do
         echo "サービス名を入力してください："
-        if ! read -r -n 256 -t 300 search_servicename; then
+        if ! read -r -t 300 search_servicename; then
             echo "タイムアウトしました."
             break
         fi
+        search_servicename=${search_servicename:0:512}
         
-        search_servicename=$(printf '%s' "Service=$search_servicename" | base64 | tr -d '\n')
+        search_key=$(printf '%s' "Service=$search_servicename" | base64 | tr -d '\n')
 
        # printf '%q' "$out_servicename" > out_servicename
 
-        if match=$(grep -x -F -A 2 -- "$search_servicename" data.log); then
+        if match=$(grep -x -F -A 2 -- "$search_key" data.log); then
             result=$(echo "$match" | sed '/^--$/d')
             echo ""
 
@@ -84,10 +93,12 @@ main(){
     #Exitが入力されるまでループする
     while true; do
         echo "次の選択肢から入力してください(Add Password/Get Password/Exit)："
-        if ! read -r -n 16 -t 300 mode; then
+        if ! read -r -t 300 mode; then
             echo "タイムアウトしました."
             break
         fi
+        mode=${mode:0:16}
+
         # Add Password/Get Password/Exitの処理
         case "$mode" in
             "Add Password")
@@ -98,7 +109,7 @@ main(){
 
             "Exit")
                 echo "Thank you!"
-                echo""
+                echo ""
                 #プログラムが終了
                 break;;
         # Add Password/Get Password/Exit 以外が入力された場合        
