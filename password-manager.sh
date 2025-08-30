@@ -1,6 +1,8 @@
 #!/bin/bash
 # パスワードを管理するシェルスクリプトです
-set -euo pipefail # エラーの検出
+
+# エラーの検出
+set -euo pipefail
 on_error() {
     echo "エラーが起きたので終了しました。"
 }
